@@ -6,6 +6,15 @@ import pandas as pd
 path = kagglehub.dataset_download("fronkongames/steam-games-dataset")
 path = path + "/games.csv"
 
+# Fix missing comma between discount and dlc headers
+with open(path, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+lines[0] = lines[0].replace("DiscountDLC", "Discount, DLC")
+
+with open(path, "w", encoding="utf-8") as f:
+    f.writelines(lines)
+
 # Load the CSV file into a DataFrame
 df = pd.read_csv(path, usecols=[
     'AppID',
