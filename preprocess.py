@@ -39,9 +39,19 @@ df = pd.read_csv(path, usecols=[
     ])
 
 # Interate over df to remove null elements, format data, and remove entries with small numbers of estimated owners
+unimportant_indxs = []
+null_indxs = []
 for i in range(len(df)):
-    if df.get(i)['Estimated owners'] == '0 - 0':
-        print("Test")
+    if df.iloc[i]['Estimated owners'] == '0 - 0' or df.iloc[i]['Estimated owners'] == '0 - 20000':
+        unimportant_indxs.append(i)
+
+    if df.iloc[i]['Genres'] is None and df.iloc[i]['Tags'] is None and i not in unimportant_indxs:
+        null_indxs.append(i)
+            
+df.drop(unimportant_indxs)
+    
+df['Genres'] = df['Genres'].str.lower()
+df['Tags'] = df['Tags'].str.lower()
 
 # Export a Preprocessed csv
 df.to_csv('games_preprocessed.csv', index=False)
