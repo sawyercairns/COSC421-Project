@@ -8,7 +8,7 @@ library(igraph)
 # --------------------------------------------------
 
 games <- read.csv(
-  "./games_preprocessed.csv",
+  "../games_preprocessed.csv",
   stringsAsFactors = FALSE
 )
 
@@ -140,6 +140,14 @@ shared_counts[
     (Game1.Tags + Game2.Tags - Shared.Tags)
 ]
 
+jaccard_threshold <- 0.15
+minimum_shared_tags <- 2
+
+final_edges <- shared_counts[
+  Shared.Tags >= minimum_shared_tags &
+    Jaccard >= jaccard_threshold
+]
+
 # --------------------------------------------------
 # 5. Filter final edges
 # --------------------------------------------------
@@ -155,7 +163,7 @@ final_edges <- shared_counts[
 cat("Final edges:", nrow(final_edges), "\n")
 
 # --------------------------------------------------
-# 5. Construct game network
+# 6. Construct game network
 # --------------------------------------------------
 
 # Only include games that have at least one final edge
@@ -209,14 +217,93 @@ community_sizes <- tibble(
   count(Community, name = "Game.Count") %>%
   arrange(desc(Game.Count))
 
+plot.new()
+# Community size distribution
+ggplot(
+  community_sizes,
+  aes(x = reorder(
+    factor(Community),
+    Game.Count
+  ), y = Game.Count)
+) +
+  geom_col() +
+  scale_y_log10() +
+  labs(
+    title = "Community Sizes",
+    subtitle = "Steam game similarity network",
+    x = "Community",
+    y = "Number of games (log scale)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+ggsave(
+  "../output/community_size_distribution.png",
+  width = 10,
+  height = 6
+)
+
+# Largest Community
+largest_community_id <- community_sizes$Community[1]
+
+largest_community <- induced_subgraph(
+  game_net,
+  vids = V(game_net)[
+    communities$membership == largest_community_id
+  ]
+) 
+
+# Calculate Average peak concurrent users, average rating, and edge density for each community
 comm_densities <- do.call(rbind, lapply(seq_along(communities), function(i) {
   sub_g <- induced_subgraph(game_net, which(membership(communities) == i))
   members = V(sub_g)
+  
+  mean.rating = mean(members$Positive/(members$Positive + members$Negative))
+  if (is.nan(mean.rating)) {
+    mean.rating = 0
+  }
+  
   data.frame(
     "Community" = i,
     "Density" = edge_density(sub_g),
-    "Average Peak CCU" = mean(members$Peak.CCU),
-    "Average Rating" = mean(members$Positive/(members$Positive + members$Negative)),
-    check.names        = FALSE
+    "Average.Peak.CCU" = mean(members$Peak.CCU),
+    # The Rating is the number of positive reviews over the total number of reviews
+    "Average.Rating" = mean.rating,
+    "Size" = community_sizes[which(community_sizes$Community == i), ]$Game.Count,
+    "Average.Shared.Tags" = mean(E(sub_g)$Shared.Tags),
+    check.names = FALSE
   )
-}))
+})) %>% arrange(desc(Size))
+
+cat("Number of communities:", length(communities), "\n")
+
+cat("Modularity:", modularity(communities), "\n")
+
+cat("Largest community:", max(comm_densities$Size), "games\n")
+
+# Show Top 10 Communities by size
+print(head(comm_densities, 10))
+
+# Show Top 10 Communities by Avg. Peak CCU
+print(head(arrange(comm_densities, desc(Average.Peak.CCU)), 10))
+
+# Show Top 10 Communities by Avg. Rating
+print(head(arrange(comm_densities, desc(Average.Rating)), 10))
+
+plot.new()
+plot(comm_densities$Density, comm_densities$Average.Peak.CCU,
+     main = "Community Density vs Average Peak CCU",
+     xlab = "Community Density",
+     ylab = "Average Peak CCU"
+)
+
+plot.new()
+plot(comm_densities$Density, comm_densities$Average.Rating,
+     main = "Community Density vs Average Rating",
+     xlab = "Community Density",
+     ylab = "Average Rating"
+)
+
