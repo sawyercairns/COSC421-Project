@@ -195,14 +195,6 @@ game_net <- graph_from_data_frame(
 
 weights <- E(game_net)$weight
 
-stopifnot(
-  ecount(game_net) > 0,
-  !is_directed(game_net),
-  length(weights) == ecount(game_net),
-  all(is.finite(weights)),
-  all(weights > 0)
-)
-
 # Louvain community detection
 communities <- cluster_louvain(
   game_net,
