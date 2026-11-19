@@ -218,5 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
 games_preprocessed.csv
 games.csv
+.Rhistory
+output/*
