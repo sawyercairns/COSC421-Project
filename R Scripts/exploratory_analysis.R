@@ -8,7 +8,7 @@ library(tidyverse)
 library(lubridate)
 
 games <- read.csv(
-  "./pre-processing/games_preprocessed.csv",
+  "../pre-processing/games_preprocessed.csv",
   stringsAsFactors = FALSE
 )
 

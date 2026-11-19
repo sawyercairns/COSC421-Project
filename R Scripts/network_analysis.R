@@ -8,7 +8,7 @@ library(igraph)
 # --------------------------------------------------
 
 games <- read.csv(
-  "C:/Users/tacti/OneDrive/Documents/GitHub/COSC421-Project/pre-processing/games_preprocessed.csv",
+  "../pre-processing/games_preprocessed.csv",
   stringsAsFactors = FALSE
 )
 

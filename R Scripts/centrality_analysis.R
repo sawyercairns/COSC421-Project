@@ -4,7 +4,7 @@ library(data.table)
 library(igraph)
 
 
-input_file <- "C:/Users/tacti/OneDrive/Documents/GitHub/COSC421-Project/pre-processing/games_preprocessed.csv"
+input_file <- "../pre-processing/games_preprocessed.csv"
 
 output_dir <- "../output/centrality_analysis"
 
